@@ -1,0 +1,135 @@
+=================Clean everything================================
+Phase 1: The Total Wipeout
+
+1.Wipeout Minikube & Kubernetes State
+# Delete the cluster and its components
+minikube delete --all --purge
+
+# Remove binaries (covering binary, dpkg, or snap installations)
+sudo rm -rf /usr/local/bin/minikube
+sudo apt-get purge -y minikube 2>/dev/null || true
+sudo snap remove minikube 2>/dev/null || true
+
+# Completely remove local configuration and caches
+rm -rf ~/.minikube ~/.kube
+
+2. Wipeout Kubectl
+# Remove binary, apt, or snap versions
+sudo rm -rf /usr/local/bin/kubectl
+sudo apt-get purge -y kubectl 2>/dev/null || true
+sudo snap remove kubectl 2>/dev/null || true
+
+3. Wipeout Docker
+
+# Stop the Docker service
+sudo systemctl stop docker.socket 2>/dev/null || true
+sudo systemctl stop docker 2>/dev/null || true
+
+# Purge all Docker packages
+sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker.io
+
+# Remove remaining storage directories, volumes, and custom configs
+sudo rm -rf /var/lib/docker
+sudo rm -rf /var/lib/containerd
+sudo rm -rf /etc/docker
+sudo rm -rf ~/.docker
+sudo rm -rf /var/run/docker.sock
+
+# Delete the docker group if it exists
+sudo groupdel docker 2>/dev/null || true
+
+4. System Cleanup
+
+sudo apt-get autoremove -y
+sudo apt-get autoclean
+
+Phase 2: Fresh Reinstallation
+
+1. Reinstall Docker Engine (Official Repository Method)
+
+Using the official Docker repository ensures you get the most stable, up-to-date performance.
+
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+
+# Install Docker components
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+
+# Install Docker components
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+2. Configure Non-Root Docker Access
+
+# Create the docker group (usually auto-created during install) and add your user
+sudo usermod -aG docker $USER
+
+# Apply group changes to the current terminal session
+newgrp docker
+
+Note: To ensure this takes effect system-wide, it is highly recommended to log out of your Ubuntu session and log back in (or restart your terminal) after running this.
+
+3. Reinstall Kubectl (Official Native Binary)
+
+# Download the stable native binary
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+# Install it to /usr/local/bin
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# Clean up the downloaded file
+rm kubectl
+
+4. Reinstall Minikube
+
+# Download the latest Linux binary
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+# Install it
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Clean up the download
+rm minikube-linux-amd64
+
+Phase 3: Spin Everything Up
+
+# Verify versions first
+docker --version
+kubectl version --client
+minikube version
+
+# Spin up Minikube using the clean Docker driver context
+minikube start --driver=docker
+
+# Check your fresh cluster status
+kubectl get nodes
+
+
+
+

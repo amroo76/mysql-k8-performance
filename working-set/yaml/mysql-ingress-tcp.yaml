@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx
+data:
+  # Format: <External-Port>: "<Namespace>/<Service-Name>:<Internal-Port>"
+  3306: "default/mysql:3306"

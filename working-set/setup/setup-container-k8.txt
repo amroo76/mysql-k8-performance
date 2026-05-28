@@ -1,0 +1,96 @@
+===setup minikube + conatainer+ mysql ===
+minikube delete --all --purge
+systemctl stop docker
+systemctl stop docker.socket
+
+
+#Force Containerd to Accept Systemd Cgroups
+
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml > /dev/null
+
+2.Force-flip the SystemdCgroup value to true inside that file automatically:
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+#sudo nano /usr/local/lib/systemd/system/containerd.service
+# /usr/local/lib/systemd/system/containerd.service was empty
+sudo nano /lib/systemd/system/containerd.service
+
+ExecStart=/usr/local/bin/containerd --config /etc/containerd/config.toml
+
+sudo systemctl daemon-reload
+sudo systemctl restart containerd
+
+# Verify the Internal Flag Flipping  Before executing kubeadm, run your query command again to make sure containerd has yielded control to systemd:
+sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock info | grep -i SystemdCgroup
+
+# Clean the workspace
+sudo kubeadm reset -f --cri-socket=unix:///run/containerd/containerd.sock
+sudo rm -rf /etc/kubernetes /var/lib/kubelet /var/lib/etcd
+sudo swapoff -a
+
+# Initialize via our configuration file
+sudo kubeadm init --config=kubeadm-config.yaml
+
+
+# Clear any stale profile tracks
+rm -rf $HOME/.kube
+
+# Mirror the system authority files
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubectl get nodes
+
+
+
+sudo modprobe br_netfilter
+echo "br_netfilter" | sudo tee -a /etc/modules
+sudo swapoff -a
+
+# Install Calico
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
+
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+kubectl get pods -n kube-system
+
+kubectl get pods -A
+
+
+kubectl get pods -w
+
+cd  /home/amrendra/projects/kubernet-mysql-mariadb/working-yml
+kubectl apply -f mysql-secret.yaml
+kubectl apply -f mysql-storage.yaml
+kubectl create configmap mysql-config --from-file=my.cnf
+kubectl describe configmap mysql-config
+kubectl apply -f mysql-deployment.yaml
+kubectl get pod
+
+#kubectl port-forward svc/mysql 3307:3306
+#mysql -h 127.0.0.1 -P 3307 -u root -p
+
+kubectl delete service mysql
+kubectl expose deployment mysql --type=NodePort --name=mysql --port=3306
+kubectl get svc mysql
+kubectl get pods -l app=mysql
+mysql -h 127.0.0.1 -P 30490 -u root -pMariadbPass_@123
+
+#delete
+kubectl delete configmap mysql-config
+kubectl delete deployment,svc mysql
+kubectl delete pvc mysql-pv-claim
+kubectl delete pv mysql-pv-volume
+kubectl delete secret mysql-secret
+
+# stop kubelet and containerd
+# 1. Disable and forcefully stop the kubelet service
+sudo systemctl disable --now kubelet
+
+# 2. Disable and forcefully stop the containerd runtime
+sudo systemctl disable --now containerd
+
+# 3. Kill any leftover container processes that are refusing to close
+sudo pkill -f kubelet
+sudo pkill -f containerd

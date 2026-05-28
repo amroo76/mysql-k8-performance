@@ -1,0 +1,69 @@
+================setup fresh ================================
+
+# start minikube with docker
+
+minikube start --cpus 12 --memory 4096 --driver=docker
+
+#
+amrendra@amrendra-HP-255R-15-6-inch-G10-Notebook-PC:~/projects/kubernet-mysql-mariadb/wokring-yml/setup$ minikube docker-env
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://192.168.49.2:2376"
+export DOCKER_CERT_PATH="/home/amrendra/.minikube/certs"
+export MINIKUBE_ACTIVE_DOCKERD="minikube"
+
+# To point your shell to minikube's docker-daemon, run:
+# eval $(minikube -p minikube docker-env)
+
+minikube profile list
+┌──────────┬────────┬─────────┬──────────────┬─────────┬────────┬───────┬────────────────┬────────────────────┐
+│ PROFILE  │ DRIVER │ RUNTIME │      IP      │ VERSION │ STATUS │ NODES │ ACTIVE PROFILE │ ACTIVE KUBECONTEXT │
+├──────────┼────────┼─────────┼──────────────┼─────────┼────────┼───────┼────────────────┼────────────────────┤
+│ minikube │ docker │ docker  │ 192.168.49.2 │ v1.35.1 │ OK     │ 1     │ *              │ *                  │
+└──────────┴────────┴─────────┴──────────────┴─────────┴────────┴───────┴────────────────┴────────────────────┘
+
+
+#install mysql in k8+docker with latest image of mysql
+
+cd  /home/amrendra/projects/kubernet-mysql-mariadb/working-yml
+kubectl apply -f mysql-secret.yaml
+kubectl apply -f mysql-storage.yaml
+kubectl create configmap mysql-config --from-file=my.cnf
+kubectl describe configmap mysql-config
+kubectl apply -f mysql-deployment.yaml
+kubectl get pod
+
+amrendra@amrendra-HP-255R-15-6-inch-G10-Notebook-PC:~/projects/kubernet-mysql-mariadb/wokring-yml/setup$ kubectl get pods --all-namespacesNAMESPACE     NAME                               READY   STATUS    RESTARTS      AGE
+default       mysql-5df6fb6694-m4248             1/1     Running   0             11m
+kube-system   coredns-7d764666f9-cd97s           1/1     Running   0             14m
+kube-system   etcd-minikube                      1/1     Running   0             14m
+kube-system   kube-apiserver-minikube            1/1     Running   0             14m
+kube-system   kube-controller-manager-minikube   1/1     Running   0             14m
+kube-system   kube-proxy-p7vb8                   1/1     Running   0             14m
+kube-system   kube-scheduler-minikube            1/1     Running   0             14m
+kube-system   storage-provisioner                1/1     Running   1 (14m ago)   14m
+
+#connect
+
+amrendra@amrendra-HP-255R-15-6-inch-G10-Notebook-PC:~/projects/kubernet-mysql-mariadb/wokring-yml/setup$ kubectl exec --stdin --tty mysql-5df6fb6694-m4248  -- /bin/bash
+bash-5.1# mysql -p
+Enter password:
+
+
+# connect using port-forward by running this in one terminal
+
+kubectl port-forward mysql-5df6fb6694-m4248  3306:3306
+
+# run this is another terminal
+amrendra@amrendra-HP-255R-15-6-inch-G10-Notebook-PC:~$ mysql -p --port=3306 --protocol=tcp --user=root
+Enter password:
+Welcome to the MariaDB monitor.  Commands end with ; or \g.
+Your MySQL connection id is 11
+Server version: 9.7.0 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+MySQL [(none)]>
+
+
