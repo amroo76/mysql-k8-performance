@@ -1,0 +1,44 @@
+===============LB==============================
+teardown and setup fresh LB
+kubectl delete configmap tcp-services -n ingress-nginx --ignore-not-found
+minikube addons disable ingress
+kubectl get svc -n ingress-nginx
+minikube addons enable ingress
+kubectl apply -f mysql-ingress-tcp.yaml
+kubectl patch svc ingress-nginx-controller -n ingress-nginx --type='json' -p='[
+  {"op": "replace", "path": "/spec/type", "value": "LoadBalancer"},
+  {"op": "add", "path": "/spec/ports/-", "value": {"name": "proxied-mysql", "port": 3306, "targetPort": 3306, "protocol": "TCP"}}
+]'
+minikube tunnel
+NAME                       TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)                                     AGE
+ingress-nginx-controller   LoadBalancer   10.106.65.253   10.106.65.253   80:31803/TCP,443:31478/TCP,3306:31524/TCP   65s
+
+
+
+mysql -h 10.106.65.253 -P 3306 -u root -p
+
+==========NodePort===================
+teardown and setup fresh NodePort
+kubectl delete configmap tcp-services -n ingress-nginx --ignore-not-found
+minikube addons disable ingress
+kubectl get svc -n ingress-nginx
+minikube addons enable ingress
+kubectl apply -f mysql-ingress-tcp.yaml
+kubectl patch svc ingress-nginx-controller -n ingress-nginx --type='json' -p='[
+  {"op": "add", "path": "/spec/ports/-", "value": {"name": "proxied-mysql", "port": 3306, "targetPort": 3306, "protocol": "TCP"}}
+]'
+kubectl get svc ingress-nginx-controller -n ingress-nginx
+Look under the PORT(S) column for 3306:XXXXX/TCP. Find what those 5 digits (XXXXX) are.
+MINIKUBE_IP=${minikube ip}
+mysql -h <MINIKUBE_IP> -P <ASSIGNED_NODEPORT> -u root -p
+
+exmaple
+amrendra@amrendra-HP-255R-15-6-inch-G10-Notebook-PC:~/projects/kubernet-mysql-mariadb$ kubectl get svc ingress-nginx-controller -n ingress-nginx
+NAME                       TYPE       CLUSTER-IP    EXTERNAL-IP   PORT(S)                                     AGE
+ingress-nginx-controller   NodePort   10.108.46.1   <none>        80:30114/TCP,443:32636/TCP,3306:31220/TCP   28s
+amrendra@amrendra-HP-255R-15-6-inch-G10-Notebook-PC:~/projects/kubernet-mysql-mariadb$ minikube ip
+192.168.49.2
+
+mysql -h 192.168.49.2 -P 31220 -u root -pMariadbPass_@123
+
+http://127.0.0.1/cgi-bin/WebX.mySQL/dim_STAT/x.welcome
