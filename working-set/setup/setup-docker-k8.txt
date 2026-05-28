@@ -125,7 +125,10 @@ kubectl version --client
 minikube version
 
 # Spin up Minikube using the clean Docker driver context
-minikube start --driver=docker
+#minikube start --driver=docker
+
+# with cpu 12 and 4 GB memory
+minikube start --cpus 12 --memory 4096 --driver=docker
 
 # Check your fresh cluster status
 kubectl get nodes

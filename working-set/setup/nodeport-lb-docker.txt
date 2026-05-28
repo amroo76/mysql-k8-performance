@@ -1,3 +1,4 @@
+minikube start --cpus 12 --memory 4096 --driver=docker
 ===============LB==============================
 #teardown and setup fresh LB
 kubectl delete configmap tcp-services -n ingress-nginx --ignore-not-found
