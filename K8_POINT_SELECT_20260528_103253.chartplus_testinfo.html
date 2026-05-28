@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TPS by Thread Count - POINT_SELECT</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .tps-delta-container {
+      margin: 40px auto;
+      max-width: 900px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      background: #f9f9f9;
+    }
+    
+    .tps-delta-container h2 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    
+    .delta-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 auto;
+    }
+    
+    .delta-table th,
+    .delta-table td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: right;
+    }
+    
+    .delta-table th:first-child,
+    .delta-table td:first-child {
+      text-align: center;
+    }
+  
+    body { font-family: sans-serif; }
+    .chart-container { max-width: 700px; margin: auto; }
+    canvas { width: 100% !important; height: 300px !important; }
+    table { border-collapse: collapse; margin: 10px auto; }
+    th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
+    th { background: #eee; }
+    h3 { text-align: center; margin-top: 10px; }
+.results-grid { display: block; margin: 40px auto; max-width: 900px;}
+.result-box {margin-bottom: 40px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9;}
+</style>
+</head>
+<body>
+  <h2 style="text-align:center;">TPS by Thread Count - POINT_SELECT</h2>
+  <div style="text-align:center; color:#666; margin-top:4px;">MySQL Cached Reads performance using Sysbench-lua test suite</div>
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+  </div>
+  <script>
+    const ctx = document.getElementById('chart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ["1","2","4","8"],
+        datasets: [
+{
+  label: "Mysql 9.7.0 (bare metal)",
+  data: [28036.3,52371.82,86868.2,119438.23],
+  backgroundColor: "#1f77b4",
+  borderColor: "#1f77b4",
+  fill: false
+}
+,
+{
+  label: "Mysql 9.7.0 (k8+port-forward+docker)",
+  data: [3559.63,6099.63,9208.46,11740.33],
+  backgroundColor: "#d62728",
+  borderColor: "#d62728",
+  fill: false
+}
+,
+{
+  label: "Mysql 9.7.0 (k8+nodeport+docker)",
+  data: [12280.62,23091.35,39016.07,52888.53],
+  backgroundColor: "#2ca02c",
+  borderColor: "#2ca02c",
+  fill: false
+}
+,
+{
+  label: "Mysql 9.7.0 (k8+LB+docker)",
+  data: [12528.32,23259.13,38880.1,51029.16],
+  backgroundColor: "#ff7f0e",
+  borderColor: "#ff7f0e",
+  fill: false
+}
+,
+{
+  label: "Mysql 9.7.0 (k8+nodeport+containerd) ",
+  data: [21464.4,39372.24,65442.19,95500.06],
+  backgroundColor: "#9467bd",
+  borderColor: "#9467bd",
+  fill: false
+}
+
+]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          title:  { display: false }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Thread Count' } },
+          y: { title: { display: true, text: 'TPS' } }
+        }
+      }
+    });
+  </script>
+<div class="tps-delta-container">
+<h2>Comparison: TPS</h2>
+<table class="delta-table">
+<thead><tr><th>Threads</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>28036.300</td><td>3559.630</td><td>12280.620</td><td>12528.320</td><td>21464.400</td></tr>
+<tr><td>2</td><td>52371.820</td><td>6099.630</td><td>23091.350</td><td>23259.130</td><td>39372.240</td></tr>
+<tr><td>4</td><td>86868.200</td><td>9208.460</td><td>39016.070</td><td>38880.100</td><td>65442.190</td></tr>
+<tr><td>8</td><td>119438.230</td><td>11740.330</td><td>52888.530</td><td>51029.160</td><td>95500.060</td></tr>
+</tbody></table>
+</div>
+<div class="tps-delta-container">
+<h3>System Info (per dataset)</h3>
+<table>
+<tr><th>Property</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Host</td><td>127.0.0.1</td><td>127.0.0.1</td><td><b>192.168.49.2</b></td><td><b>10.111.191.171</b></td><td><b>k8s-master</b></td></tr>
+<tr><td>CPU</td><td>AMD Ryzen 5 7535U with Radeon Graphics</td><td>AMD Ryzen 5 7535U with Radeon Graphics</td><td>AMD Ryzen 5 7535U with Radeon Graphics</td><td>AMD Ryzen 5 7535U with Radeon Graphics</td><td>AMD Ryzen 5 7535U with Radeon Graphics</td></tr>
+<tr><td>CPU Count</td><td>12</td><td>12</td><td>12</td><td>12</td><td>12</td></tr>
+<tr><td>Core Count</td><td>6</td><td>6</td><td>6</td><td>6</td><td>6</td></tr>
+<tr><td>Socket Count</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>OS</td><td>Linux</td><td>Linux</td><td>Linux</td><td>Linux</td><td>Linux</td></tr>
+<tr><td>RAM</td><td>6.96 GB</td><td>6.96 GB</td><td>6.96 GB</td><td>6.96 GB</td><td>6.96 GB</td></tr>
+<tr><td>Disk</td><td>unknown</td><td>unknown</td><td>unknown</td><td>unknown</td><td>unknown</td></tr>
+</table>
+</div>
+<h3>Database Info (per dataset)</h3>
+<table>
+<tr><th>Property</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Database Maker</td><td>mysql</td><td>mysql</td><td>mysql</td><td>mysql</td><td>mysql</td></tr>
+<tr><td>Database Version</td><td>9.7.0</td><td>9.7.0</td><td>9.7.0</td><td>9.7.0</td><td>9.7.0</td></tr>
+<tr><td>Engine</td><td>innodb</td><td>innodb</td><td>innodb</td><td>innodb</td><td>innodb</td></tr>
+<tr><td>Install Dir</td><td>/home/amrendra/TAF/database_software_installs/mysql-9.7.0-linux-glibc2.28-x86_64</td><td>/home/amrendra/TAF/database_software_installs/mysql-9.7.0-linux-glibc2.28-x86_64</td><td>/home/amrendra/TAF/database_software_installs/mysql-9.7.0-linux-glibc2.28-x86_64</td><td>/home/amrendra/TAF/database_software_installs/mysql-9.7.0-linux-glibc2.28-x86_64</td><td>/home/amrendra/TAF/database_software_installs/mysql-9.7.0-linux-glibc2.28-x86_64</td></tr>
+<tr><td>Config File</td><td>/home/amrendra/projects/kubernet-mysql-mariadb/mysql_simple_2gbp.cnf</td><td>/home/amrendra/projects/kubernet-mysql-mariadb/mysql_simple_2gbp.cnf</td><td>/home/amrendra/projects/kubernet-mysql-mariadb/mysql_simple_2gbp.cnf</td><td>/home/amrendra/projects/kubernet-mysql-mariadb/mysql_simple_2gbp.cnf</td><td>/home/amrendra/projects/kubernet-mysql-mariadb/mysql_simple_2gbp.cnf</td></tr>
+<tr><td>Config Contents</td><td style="font-size:smaller;">innodb_redo_log_capacity=512M<br>innodb_flush_method=O_DIRECT<br>performance_schema=ON<br>table_open_cache=2048<br>thread_cache_size=128<br>innodb_write_io_threads=4<br>innodb_buffer_pool_instances=1<br>innodb_file_per_table=1<br>secure-file-priv=/home/amrendra/TAF/tmp/<br>innodb_monitor_enable='%'<br>innodb_buffer_pool_size=2G<br>innodb_flush_neighbors=0<br>max_connections=200<br>open_files_limit=65535<br>innodb_read_io_threads=4</td><td style="font-size:smaller;">innodb_redo_log_capacity=512M<br>innodb_flush_method=O_DIRECT<br>performance_schema=ON<br>table_open_cache=2048<br>thread_cache_size=128<br>innodb_write_io_threads=4<br>innodb_buffer_pool_instances=1<br>innodb_file_per_table=1<br>secure-file-priv=/home/amrendra/TAF/tmp/<br>innodb_monitor_enable='%'<br>innodb_buffer_pool_size=2G<br>innodb_flush_neighbors=0<br>max_connections=200<br>open_files_limit=65535<br>innodb_read_io_threads=4</td><td style="font-size:smaller;">innodb_redo_log_capacity=512M<br>innodb_flush_method=O_DIRECT<br>performance_schema=ON<br>table_open_cache=2048<br>thread_cache_size=128<br>innodb_write_io_threads=4<br>innodb_buffer_pool_instances=1<br>innodb_file_per_table=1<br>secure-file-priv=/home/amrendra/TAF/tmp/<br>innodb_monitor_enable='%'<br>innodb_buffer_pool_size=2G<br>innodb_flush_neighbors=0<br>max_connections=200<br>open_files_limit=65535<br>innodb_read_io_threads=4</td><td style="font-size:smaller;">innodb_redo_log_capacity=512M<br>innodb_flush_method=O_DIRECT<br>performance_schema=ON<br>table_open_cache=2048<br>thread_cache_size=128<br>innodb_write_io_threads=4<br>innodb_buffer_pool_instances=1<br>innodb_file_per_table=1<br>secure-file-priv=/home/amrendra/TAF/tmp/<br>innodb_monitor_enable='%'<br>innodb_buffer_pool_size=2G<br>innodb_flush_neighbors=0<br>max_connections=200<br>open_files_limit=65535<br>innodb_read_io_threads=4</td><td style="font-size:smaller;">innodb_redo_log_capacity=512M<br>innodb_flush_method=O_DIRECT<br>performance_schema=ON<br>table_open_cache=2048<br>thread_cache_size=128<br>innodb_write_io_threads=4<br>innodb_buffer_pool_instances=1<br>innodb_file_per_table=1<br>secure-file-priv=/home/amrendra/TAF/tmp/<br>innodb_monitor_enable='%'<br>innodb_buffer_pool_size=2G<br>innodb_flush_neighbors=0<br>max_connections=200<br>open_files_limit=65535<br>innodb_read_io_threads=4</td></tr>
+</table>
+<h3>Test Info (per dataset)</h3>
+<table>
+<tr><th>Property</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Test Suite</td><td>sysbench-lua</td><td>sysbench-lua</td><td>sysbench-lua</td><td>sysbench-lua</td><td>sysbench-lua</td></tr>
+<tr><td>Test Name</td><td>POINT_SELECT</td><td>POINT_SELECT</td><td>POINT_SELECT</td><td>POINT_SELECT</td><td>POINT_SELECT</td></tr>
+<tr><td>Duration</td><td>300</td><td>300</td><td>300</td><td>300</td><td>300</td></tr>
+<tr><td>Iterations</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>Db driver</td><td>mysql</td><td>mysql</td><td>mysql</td><td>mysql</td><td>mysql</td></tr>
+<tr><td>Debug sysbench</td><td>false</td><td>false</td><td>false</td><td>false</td><td>false</td></tr>
+<tr><td>Intermediate result</td><td>2</td><td>2</td><td>2</td><td>2</td><td>2</td></tr>
+<tr><td>Number of rows</td><td>500000</td><td>500000</td><td>500000</td><td>500000</td><td>500000</td></tr>
+<tr><td>Number of tables</td><td>8</td><td>8</td><td>8</td><td>8</td><td>8</td></tr>
+<tr><td>Use bmk</td><td>true</td><td>true</td><td>true</td><td>true</td><td>true</td></tr>
+<tr><td>Timestamp</td><td>2026-5-26 09:42:56</td><td>2026-5-26 11:35:42</td><td>2026-5-26 16:55:15</td><td>2026-5-26 19:47:08</td><td>2026-5-27 20:04:22</td></tr>
+</table>
+<div class="results-grid"><div class="result-box"><h3>Thread Count: 1</h3>
+<table><tr><th>Metric</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Mean</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+<tr><td>Max</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+<tr><td>Min</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+<tr><td>StdDev</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>CoV</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Median (p50)</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+<tr><td>p95</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+<tr><td>p99</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+<tr><td>Skewness</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Iteration 1</td><td>28036.30</td><td>3559.63</td><td>12280.62</td><td>12528.32</td><td>21464.40</td></tr>
+</table>
+</div>
+<div class="result-box"><h3>Thread Count: 2</h3>
+<table><tr><th>Metric</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Mean</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+<tr><td>Max</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+<tr><td>Min</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+<tr><td>StdDev</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>CoV</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Median (p50)</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+<tr><td>p95</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+<tr><td>p99</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+<tr><td>Skewness</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Iteration 1</td><td>52371.82</td><td>6099.63</td><td>23091.35</td><td>23259.13</td><td>39372.24</td></tr>
+</table>
+</div>
+<div class="result-box"><h3>Thread Count: 4</h3>
+<table><tr><th>Metric</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Mean</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+<tr><td>Max</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+<tr><td>Min</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+<tr><td>StdDev</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>CoV</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Median (p50)</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+<tr><td>p95</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+<tr><td>p99</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+<tr><td>Skewness</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Iteration 1</td><td>86868.20</td><td>9208.46</td><td>39016.07</td><td>38880.10</td><td>65442.19</td></tr>
+</table>
+</div>
+<div class="result-box"><h3>Thread Count: 8</h3>
+<table><tr><th>Metric</th></th><th>Mysql 9.7.0 (bare metal)</th><th>Mysql 9.7.0 (k8 port-forward+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+docker)</th><th>Mysql 9.7.0 (k8 LB+docker)</th><th>Mysql 9.7.0 (k8 Nodeport+containerd)</th></tr>
+<tr><td>Mean</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+<tr><td>Max</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+<tr><td>Min</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+<tr><td>StdDev</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>CoV</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Median (p50)</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+<tr><td>p95</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+<tr><td>p99</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+<tr><td>Skewness</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td><td>0.00</td></tr>
+<tr><td>Iteration 1</td><td>119438.23</td><td>11740.33</td><td>52888.53</td><td>51029.16</td><td>95500.06</td></tr>
+</table>
+</div>
+</body></html>
